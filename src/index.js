@@ -5,20 +5,19 @@ import { Donut } from 'react-dial-knob'
 
 function Step(props) {
     return (
-      <button className="Step" onClick={() => {props.onClick(); } }>
-        {props.value}
+      <button className="Step" onClick={props.onClick} style = {{color : props.value? 'red' : 'white'}}>
+        {props.value.toString()}
       </button>
     );
 }
 
 function Knob(props) {
-  const [value, setValue] = React.useState(5)
   return <Donut
         diameter={200}
         min={0}
-        max={20}
+        max={100}
         step={1}
-        value={value}
+        value={props.decay}
         theme={{
             donutColor: 'lightcoral'
         }}
@@ -27,7 +26,7 @@ function Knob(props) {
           margin: '100px auto',
           width: '200px'
         }}
-        onValueChange={setValue}
+        onValueChange={props.onValueChange}
         ariaLabelledBy={'my-label'}
         spaceMaxFromZero={false}
     >
@@ -44,19 +43,22 @@ class Oscillator extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      decay: 100,
+      decay: props.decay,
       shape: 'square',
       tune: 0,
       envAmount: 0,
+      handler: props.handler.bind(this),
     }
   }
-  renderKnob(type){
-    return <Knob value={this.state.decay}
-     onValueChange={() => {this.handleValueChange()}}/>
+  renderKnob(props){
+    return <Knob decay={this.state.decay}
+     onValueChange={this.state.handler}
+     />
   }
 
-  handleValueChange(value){
-    console.log(value);
+  handleValueChange(e){
+    this.setState({decay:e});
+    console.log(e);
   }
 
   render() {
@@ -68,13 +70,14 @@ class Sequencer extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      voice1Seq: Array(16).fill(0),
-      voice2Seq: Array(16).fill(0),
-      voice3Seq: Array(16).fill(0),
+      voice1Seq: Array(16).fill(false),
+      voice2Seq: Array(16).fill(false),
+      voice3Seq: Array(16).fill(false),
       numSteps1: 16,
       numSteps2: 16,
       numSteps3: 16,
     };
+    this.renderStep = this.renderStep.bind(this);
   }
   renderStep(i,j) {
     switch(i){
@@ -93,90 +96,50 @@ class Sequencer extends React.Component {
   };
 }
   handleClick(i,j){
-    const squares = this.state.steps.slice();
-    squares[i] = (this.state.xIsNext? 'X' : 'O');
-    this.setState({squares: squares, xIsNext: !this.state.xIsNext});
+    let steps;
+    switch(i){
+      case 1:
+        steps = this.state.voice1Seq.slice();
+        steps[j-1] = (!this.state.voice1Seq[j-1]);
+        this.setState({voice1Seq: steps});
+        break;
+      case 2:
+        steps = this.state.voice2Seq.slice();
+        steps[j-1] = (!this.state.voice2Seq[j-1]);
+        this.setState({voice2Seq: steps});
+        break;
+      case 3:
+        steps = this.state.voice3Seq.slice();
+        steps[j-1] = (!this.state.voice3Seq[j-1]);
+        this.setState({voice3Seq: steps});
+        break;
+    }
   }
 
   render() {
     let status;
     status = "Wow, cool moves"
-    const voice1SeqRow = [];
-    /*for (let j = 0; j < this.numSteps1; j++) {
-    // note: we are adding a key prop here to allow react to uniquely identify each
-    // element in this array. see: https://reactjs.org/docs/lists-and-keys.html
-      voice1SeqRow.push({this.renderStep(1,j)}).bind(this);
-    }
-    console.log("MadeIt")
-    const voice2SeqRow = [];
-    for (let j = 0; j < this.numSteps2; j++) {
-    // note: we are adding a key prop here to allow react to uniquely identify each
-    // element in this array. see: https://reactjs.org/docs/lists-and-keys.html
-      voice2SeqRow.push(key={j}{this.renderStep(2,j)});
-    }
-    const voice3SeqRow = [];
-    for (let j = 0; j < this.numSteps3; j++) {
-    // note: we are adding a key prop here to allow react to uniquely identify each
-    // element in this array. see: https://reactjs.org/docs/lists-and-keys.html
-      voice3SeqRow.push( key={j}{this.renderStep(3,j)});
-    }
-    */
+    //const voice1SeqRow = [];
+    const voice1SeqRow = Array.from({length: this.state.numSteps1}, (_, i) => i + 1).map((j) => 
+      <div key={'1' + j.toString()}> {this.renderStep(1,j)}</div>
+    );
+    const voice2SeqRow = Array.from({length: this.state.numSteps2}, (_, i) => i + 1).map((j) => 
+      <div key={'2' + j.toString()}> {this.renderStep(2,j)}</div>
+    );
+    const voice3SeqRow = Array.from({length: this.state.numSteps3}, (_, i) => i + 1).map((j) => 
+      <div key={'3' + j.toString()}> {this.renderStep(3,j)}</div>
+    );
     return (<div>
       <div className="status">{status}</div>
-      <div className="board-row">
-          {this.renderStep(1,1)}
-          {this.renderStep(1,2)}
-          {this.renderStep(1,3)}
-          {this.renderStep(1,4)}
-          {this.renderStep(1,5)}
-          {this.renderStep(1,6)}
-          {this.renderStep(1,7)}
-          {this.renderStep(1,8)}
-          {this.renderStep(1,9)}
-          {this.renderStep(1,10)}
-          {this.renderStep(1,11)}
-          {this.renderStep(1,12)}
-          {this.renderStep(1,13)}
-          {this.renderStep(1,14)}
-          {this.renderStep(1,15)}
-          {this.renderStep(1,16)}
+      <div className="container">
+        {voice1SeqRow}
       </div>
-    <div className="board-row">
-          {this.renderStep(2,1)}
-          {this.renderStep(2,2)}
-          {this.renderStep(2,3)}
-          {this.renderStep(2,4)}
-          {this.renderStep(2,5)}
-          {this.renderStep(2,6)}
-          {this.renderStep(2,7)}
-          {this.renderStep(2,8)}
-          {this.renderStep(2,9)}
-          {this.renderStep(2,10)}
-          {this.renderStep(2,11)}
-          {this.renderStep(2,12)}
-          {this.renderStep(2,13)}
-          {this.renderStep(2,14)}
-          {this.renderStep(2,15)}
-          {this.renderStep(2,16)}
-    </div>
-    <div className="board-row">
-          {this.renderStep(3,1)}
-          {this.renderStep(3,2)}
-          {this.renderStep(3,3)}
-          {this.renderStep(3,4)}
-          {this.renderStep(3,5)}
-          {this.renderStep(3,6)}
-          {this.renderStep(3,7)}
-          {this.renderStep(3,8)}
-          {this.renderStep(3,9)}
-          {this.renderStep(3,10)}
-          {this.renderStep(3,11)}
-          {this.renderStep(3,12)}
-          {this.renderStep(3,13)}
-          {this.renderStep(3,14)}
-          {this.renderStep(3,15)}
-          {this.renderStep(3,16)}
-    </div>
+      <div className="container">
+        {voice2SeqRow}
+      </div>
+      <div className="container">
+        {voice3SeqRow}
+      </div>
   </div>
     );
   }
@@ -186,26 +149,38 @@ class DrumMachine extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      voice1Seq: Array(16).fill(0),
-      voice2Seq: Array(16).fill(0),
-      voice3Seq: Array(16).fill(0),
       numSteps1: 16,
       numSteps2: 16,
       numSteps3: 16,
+      VcoDecay: 84,
+      decayChange : this.decayChange.bind(this),
     };
+  }
+  decayChange(value){
+    console.log('change in Osc to ' + value);
+    this.setState({VcoDecay: value});
+  }
+  render() {
+    console.log('renderbender')
+    return (
+      <div className="DrumMachine">
+        <div className="Oscillator">
+        <Oscillator decay={this.state.VcoDecay} handler={this.state.decayChange}/>
+        <Sequencer/>
+        </div>
+      </div>
+    );
+  }
+}
+
+class App extends React.Component {
+  constructor(props){
+    super(props);
   }
   render() {
     return (
       <div className="game">
-        <div className="game-board">
-        <Oscillator/>
-        <Oscillator/>
-        <Sequencer/>
-        </div>
-        <div className="facts">
-          <div>{/* status */}</div>
-          <ol>{/* TODO */}</ol>
-        </div>
+        <DrumMachine/>
       </div>
     );
   }
@@ -214,4 +189,4 @@ class DrumMachine extends React.Component {
 // ========================================
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<DrumMachine />);
+root.render(<App />);
